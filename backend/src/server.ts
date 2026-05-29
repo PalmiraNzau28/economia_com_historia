@@ -1,10 +1,10 @@
+import 'dotenv/config'
 import { createServer } from 'node:http'
 import app from './app.js'
-
-const port = Number(process.env.PORT ?? 4000)
+import { env } from './config/env.js'
 
 const server = createServer(app)
 
-server.listen(port, () => {
-  console.log(`Backend running on http://localhost:${port}`)
+server.listen(env.port, () => {
+  console.log(`Backend running on http://localhost:${env.port}`)
 })

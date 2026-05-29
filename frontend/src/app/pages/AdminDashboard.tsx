@@ -1,4 +1,5 @@
 import { useAuth } from '../contexts/AuthContext';
+import { apiRequest } from '../services/api';
 import { useNavigate } from 'react-router';
 import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
@@ -203,13 +204,23 @@ export default function AdminDashboard() {
       navigate('/');
       return;
     }
-    loadData();
+    void loadData();
   }, [isAuthenticated, user, navigate]);
 
-  const loadData = () => {
-    const usersData = localStorage.getItem('users');
-    if (usersData) {
-      setUsers(JSON.parse(usersData));
+  const loadData = async () => {
+    const currentUser = user ? { 'x-user-id': String(user.id) } : undefined;
+
+    try {
+      const usersResponse = await apiRequest<any[]>('/users', {
+        headers: currentUser,
+      });
+      setUsers(usersResponse.map((item) => ({
+        ...item,
+        id: String(item.id),
+      })));
+    } catch (error) {
+      console.error('Erro ao carregar utilizadores:', error);
+      setUsers([]);
     }
 
     const rankingData = localStorage.getItem('quiz_ranking');
@@ -584,11 +595,18 @@ export default function AdminDashboard() {
     );
   };
 
-  const handleDeleteUser = (id: string) => {
+  const handleDeleteUser = async (id: string) => {
     if (confirm('Tem certeza que deseja apagar este usuário?')) {
-      const updatedUsers = users.filter(u => u.id !== id);
-      setUsers(updatedUsers);
-      localStorage.setItem('users', JSON.stringify(updatedUsers));
+      try {
+        await apiRequest(`/users/${id}`, {
+          method: 'DELETE',
+          headers: user ? { 'x-user-id': String(user.id) } : undefined,
+        });
+        setUsers((current) => current.filter((u) => String(u.id) !== String(id)));
+      } catch (error) {
+        console.error('Erro ao remover utilizador:', error);
+        alert('Não foi possível apagar o utilizador.');
+      }
     }
   };
 

@@ -81,7 +81,9 @@ export default function Login() {
         const success = await login(email, password);
         if (success) {
           // Verificar se é admin
-          if (email === 'admin@gmail.com') {
+          const savedUser = localStorage.getItem('currentUser');
+          const currentUser = savedUser ? JSON.parse(savedUser) : null;
+          if (currentUser?.isAdmin) {
             navigate('/admin');
           } else {
             navigate('/');

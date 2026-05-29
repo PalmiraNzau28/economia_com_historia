@@ -1,133 +1,130 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
+import { apiRequest } from '../services/api'
 
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  province?: string;
-  createdAt: string;
-  isAdmin?: boolean;
+export interface User {
+  id: number
+  name: string
+  email: string
+  phone?: string | null
+  province?: string | null
+  institution?: string | null
+  course?: string | null
+  role: 'visitante' | 'subscrito' | 'admin'
+  avatarUrl?: string | null
+  isActive?: boolean
+  createdAt: string
+  lastAccess?: string | null
+  isAdmin?: boolean
 }
 
 interface AuthContextType {
-  user: User | null;
-  login: (email: string, password: string) => Promise<boolean>;
-  register: (name: string, email: string, password: string, province?: string) => Promise<boolean>;
-  logout: () => void;
-  isAuthenticated: boolean;
+  user: User | null
+  login: (email: string, password: string) => Promise<boolean>
+  register: (
+    name: string,
+    email: string,
+    password: string,
+    province?: string,
+    institution?: string,
+    course?: string,
+    phone?: string,
+  ) => Promise<boolean>
+  logout: () => void
+  isAuthenticated: boolean
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType | undefined>(undefined)
+
+const STORAGE_KEY = 'currentUser'
+
+function normalizeUser(user: any): User {
+  return {
+    id: Number(user.id),
+    name: user.name,
+    email: user.email,
+    phone: user.phone ?? null,
+    province: user.province ?? null,
+    institution: user.institution ?? null,
+    course: user.course ?? null,
+    role: user.role ?? (user.isAdmin ? 'admin' : 'subscrito'),
+    avatarUrl: user.avatarUrl ?? null,
+    isActive: user.isActive ?? true,
+    createdAt: user.createdAt ?? new Date().toISOString(),
+    lastAccess: user.lastAccess ?? null,
+    isAdmin: Boolean(user.isAdmin ?? user.role === 'admin'),
+  }
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(null)
 
   useEffect(() => {
-    // Carregar utilizador do localStorage ao iniciar
-    const savedUser = localStorage.getItem('currentUser');
+    const savedUser = localStorage.getItem(STORAGE_KEY)
     if (savedUser) {
-      setUser(JSON.parse(savedUser));
+      try {
+        setUser(normalizeUser(JSON.parse(savedUser)))
+      } catch {
+        localStorage.removeItem(STORAGE_KEY)
+      }
     }
-  }, []);
+  }, [])
 
-  const register = async (name: string, email: string, password: string, province?: string): Promise<boolean> => {
+  const persistUser = (nextUser: User | null) => {
+    setUser(nextUser)
+    if (nextUser) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(nextUser))
+    } else {
+      localStorage.removeItem(STORAGE_KEY)
+    }
+  }
+
+  const register: AuthContextType['register'] = async (
+    name,
+    email,
+    password,
+    province,
+    institution,
+    course,
+    phone,
+  ) => {
     try {
-      // Obter utilizadores existentes do localStorage
-      const usersData = localStorage.getItem('users');
-      const users = usersData ? JSON.parse(usersData) : [];
-
-      // Verificar se o email já existe
-      const existingUser = users.find((u: User & { password: string }) => u.email === email);
-      if (existingUser) {
-        return false; // Email já registado
-      }
-
-      // Criar novo utilizador
-      const newUser: User & { password: string } = {
-        id: Math.random().toString(36).substring(2, 9),
-        name,
-        email,
-        password, // Em produção, isto seria hasheado
-        province: province || 'Luanda',
-        createdAt: new Date().toISOString(),
-      };
-
-      // Guardar utilizador
-      users.push(newUser);
-      localStorage.setItem('users', JSON.stringify(users));
-
-      // Fazer login automaticamente
-      const userWithoutPassword: User = {
-        id: newUser.id,
-        name: newUser.name,
-        email: newUser.email,
-        province: newUser.province,
-        createdAt: newUser.createdAt,
-      };
-      setUser(userWithoutPassword);
-      localStorage.setItem('currentUser', JSON.stringify(userWithoutPassword));
-
-      return true;
+      await apiRequest('/auth/register', {
+        method: 'POST',
+        json: {
+          name,
+          email,
+          password,
+          province,
+          institution,
+          course,
+          telemovel: phone ?? null,
+        },
+      })
+      return true
     } catch (error) {
-      console.error('Erro ao registar:', error);
-      return false;
+      console.error('Erro ao registar:', error)
+      return false
     }
-  };
+  }
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const login: AuthContextType['login'] = async (email, password) => {
     try {
-      // Verificar se é o administrador
-      if (email === 'admin@gmail.com' && password === 'admin123') {
-        const adminUser: User = {
-          id: 'admin',
-          name: 'Administrador',
-          email: 'admin@gmail.com',
-          province: 'Luanda',
-          createdAt: new Date().toISOString(),
-          isAdmin: true,
-        };
-        setUser(adminUser);
-        localStorage.setItem('currentUser', JSON.stringify(adminUser));
-        return true;
-      }
+      const response = await apiRequest<{ user: any }>('/auth/login', {
+        method: 'POST',
+        json: { email, password },
+      })
 
-      // Obter utilizadores do localStorage
-      const usersData = localStorage.getItem('users');
-      const users = usersData ? JSON.parse(usersData) : [];
-
-      // Verificar credenciais
-      const foundUser = users.find(
-        (u: User & { password: string }) => u.email === email && u.password === password
-      );
-
-      if (!foundUser) {
-        return false; // Credenciais inválidas
-      }
-
-      // Criar objeto de utilizador sem password
-      const userWithoutPassword: User = {
-        id: foundUser.id,
-        name: foundUser.name,
-        email: foundUser.email,
-        province: foundUser.province || 'Luanda',
-        createdAt: foundUser.createdAt,
-        isAdmin: false,
-      };
-
-      setUser(userWithoutPassword);
-      localStorage.setItem('currentUser', JSON.stringify(userWithoutPassword));
-
-      return true;
+      persistUser(normalizeUser(response.user))
+      return true
     } catch (error) {
-      console.error('Erro ao fazer login:', error);
-      return false;
+      console.error('Erro ao fazer login:', error)
+      return false
     }
-  };
+  }
 
   const logout = () => {
-    setUser(null);
-    localStorage.removeItem('currentUser');
-  };
+    persistUser(null)
+  }
 
   return (
     <AuthContext.Provider
@@ -141,13 +138,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     >
       {children}
     </AuthContext.Provider>
-  );
+  )
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext);
+  const context = useContext(AuthContext)
   if (context === undefined) {
-    throw new Error('useAuth deve ser usado dentro de um AuthProvider');
+    throw new Error('useAuth deve ser usado dentro de um AuthProvider')
   }
-  return context;
+  return context
 }
