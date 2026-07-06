@@ -132,5 +132,7 @@ npm run dev
 Licença
 MIT License — ver LICENSE para detalhes.
 
-- O backend e o mobile foram criados como base inicial.
-- Se quiseres, a seguir posso colocar a pasta `database` dentro de `backend` para ficar tudo mais limpo.
+
+
+
+
