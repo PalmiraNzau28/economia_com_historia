@@ -1,59 +1,136 @@
 # Educação Interativa Angola
 
-Projecto educativo sobre economia e história de Angola, organizado em três partes principais:
+Plataforma educativa angolana dedicada à divulgação de conteúdo sobre economia e história de Angola. Artigos, vídeos, podcasts, quizzes e fóruns de discussão.
 
 - `frontend` - interface web principal
 - `backend` - API e regras de negócio
 - `mobile` - aplicação mobile
 - `database` - ficheiros e recursos relacionados com a base de dados
 
+---
+
+## Funcionalidades
+
+| Módulo | Descrição |
+|--------|-----------|
+| **Artigos** | Publicação, comentários aninhados, destaques, busca por categoria |
+| **Conteúdo Multimédia** | Vídeos, podcasts, textos Jindungo (acesso controlado), reações, playlists |
+| **Fórum** | Tópicos públicos e privados, respostas aninhadas, votos, enquetes, denúncias |
+| **Quiz** | Questionários educativos com ranking e resultados |
+| **Salas de Discussão** | Chat em tempo real com gestão de membros e convites |
+| **Moderação** | Aprovações de acesso, gestão de denúncias, controlo de autores |
+
+---
+
+## Tecnologias
+
+- **Backend:** PHP + MySQL (InnoDB)
+- **Frontend:** HTML/CSS/JavaScript
+- **Design:** Figma
+- **Base de dados:** 39 tabelas, 71 relações de chave estrangeira
+
+---
+
 ## Estrutura
 
 ```text
-Educação interativa Angola/
-├─ frontend/
+economia-com-historia/
 ├─ backend/
+│  ├─ api/
+│  │  ├─ auth/              # Login, registo, recuperação de senha
+│  │  ├─ artigos/           # CRUD de artigos e comentários
+│  │  ├─ conteudo/          # Vídeos, podcasts, textos Jindungo
+│  │  ├─ forum/             # Tópicos, respostas, enquetes, votos
+│  │  ├─ quiz/              # Quizzes, perguntas, respostas
+│  │  ├─ salas/             # Salas de discussão e mensagens
+│  │  └─ admin/             # Gestão de utilizadores, denúncias, aprovações
+│  ├─ config/
+│  │  └─ database.php       # Configuração da base de dados
+│  ├─ middleware/
+│  │  └─ auth.php           # Autenticação e autorização
+│  └─ utils/
+│     └─ helpers.php        # Funções auxiliares
+│
+├─ frontend/
+│  ├─ public/
+│  │  ├─ css/
+│  │  ├─ js/
+│  │  ├─ img/
+│  │  └─ uploads/           # Ficheiros enviados pelos utilizadores
+│  ├─ pages/
+│  │  ├─ home.php
+│  │  ├─ artigo.php
+│  │  ├─ conteudo.php
+│  │  ├─ forum.php
+│  │  ├─ quiz.php
+│  │  ├─ sala.php
+│  │  └─ perfil.php
+│  ├─ components/
+│  │  ├─ header.php
+│  │  ├─ footer.php
+│  │  ├─ sidebar.php
+│  │  └─ navbar.php
+│  └─ admin/
+│     ├─ dashboard.php
+│     ├─ utilizadores.php
+│     ├─ denuncias.php
+│     └─ estatisticas.php
+│
 ├─ mobile/
+│  └─ (futuro)
+│
 ├─ database/
+│  ├─ schema/
+│  │  └─ schema_completo.sql    # Script completo da base de dados
+│  ├─ migrations/
+│  │  └─ (futuro)
+│  └─ seeds/
+│     └─ (futuro)
+│
+├─ docs/
+│  ├─ DER.png                     # Diagrama Entidade-Relacionamento
+│  ├─ Diagrama_Casos_de_Uso.png   # Diagrama de Casos de Uso
+│  └─ figma/
+│     └─ (ficheiros de design)
+│
+├─ .gitignore
+├─ LICENSE
 └─ README.md
-```
+---
 
-## Frontend
+## Tipos de Utilizador
 
-A pasta `frontend` contém a aplicação web existente, construída com React e Vite.
+| Tipo | Permissões |
+|------|-----------|
+| **Visitante** | Ler conteúdo público, registar-se |
+| **Subscrito** | Comentar, responder quiz, salvar conteúdo, participar em fóruns e salas |
+| **Professor** | Publicar artigos, criar enquetes, marcar respostas aceites |
+| **Admin** | Gerir utilizadores, moderar denúncias, aprovar acessos|
+| **SuperAdmin** | Todas as permissões de admin + gestão de admins |
 
-## Backend
+---
 
-A pasta `backend` já está preparada com uma estrutura inicial para:
+## Instalação
 
-- servidor
-- rotas
-- controllers
-- middlewares
-- configuração de ambiente
+```bash
+# 1. Clonar o repositório
+git clone https://github.com/seu-user/economia-com-historia.git
+cd economia-com-historia
 
-## Mobile
+# 2. Importar a base de dados
+mysql -u root -p < schema_completo.sql
 
-A pasta `mobile` já tem uma base inicial para uma app Expo / React Native.
+# 3. Configurar credenciais 
+Backend/.env.desenvolvimento
 
-## Database
+# Instalar as dependências
+npm install 
 
-A pasta `database` pode ser usada para:
+# 4. Iniciar o servidor local
+npm run dev
 
-- scripts de criação da base de dados
-- migrations
-- seeds
-- backups
-- documentação da estrutura da base de dados
-
-## Como começar
-
-1. Trabalhar primeiro no `frontend`, porque já está funcional.
-2. Expandir o `backend` com autenticação, conteúdos e fórum.
-3. Evoluir o `mobile` usando a mesma API do backend.
-4. Organizar a `database` conforme o ORM ou motor que escolheres.
-
-## Notas
+Licença
+MIT License — ver LICENSE para detalhes.
 
 - O backend e o mobile foram criados como base inicial.
 - Se quiseres, a seguir posso colocar a pasta `database` dentro de `backend` para ficar tudo mais limpo.
